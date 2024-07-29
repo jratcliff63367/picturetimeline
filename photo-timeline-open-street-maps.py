@@ -20,7 +20,7 @@ from datetime import datetime
 from collections import namedtuple
 
 # Define a namedtuple to store photo metadata
-PhotoMetadata = namedtuple('PhotoMetadata', ['date_time', 'image_name', 'latitude', 'longitude'])
+PhotoMetadata = namedtuple('PhotoMetadata', ['date_time', 'image_path', 'latitude', 'longitude'])
 
 def get_exif_data(image_path):
     """Extract EXIF data from an image and return date, time, latitude, and longitude if available."""
@@ -55,7 +55,7 @@ def get_exif_data(image_path):
         if not date_time:
             return None
         
-        return PhotoMetadata(date_time=date_time, image_name=os.path.basename(image_path), latitude=lat, longitude=lon)
+        return PhotoMetadata(date_time=date_time, image_path=image_path, latitude=lat, longitude=lon)
     except Exception as e:
         print(f"Error reading EXIF data from {image_path}: {e}")
         return None
@@ -103,16 +103,14 @@ def process_images(directory):
     photos = []
     print("Scanning for pictures...")
     
-    # Read EXIF data from all images in the directory
-    filenames = [f for f in os.listdir(directory) if f.lower().endswith(('.jpg', '.jpeg', '.tiff', '.png'))]
-    total_files = len(filenames)
-    for i, filename in enumerate(filenames):
-        image_path = os.path.join(directory, filename)
-        metadata = get_exif_data(image_path)
-        if metadata:
-            photos.append(metadata)
-        if (i + 1) % 100 == 0 or (i + 1) == total_files:
-            print(f"Processed {i + 1}/{total_files} images")
+    # Walk through all subdirectories to find image files
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.lower().endswith(('.jpg', '.jpeg', '.tiff', '.png')):
+                image_path = os.path.join(root, file)
+                metadata = get_exif_data(image_path)
+                if metadata:
+                    photos.append(metadata)
 
     print("Sorting pictures...")
     # Sort photos by date and time
@@ -122,7 +120,7 @@ def process_images(directory):
     output_file = os.path.join(directory, 'photo_timeline.csv')
     with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
         fieldnames = [
-            'date photo taken', 'time photo taken', 'name of image', 'nearest business', 
+            'date photo taken', 'time photo taken', 'image path', 'nearest business', 
             'nearest street address', 'nearest city', 'nearest state', 'nearest country', 
             'GPS coordinates', 'Google Maps link'
         ]
@@ -152,7 +150,7 @@ def process_images(directory):
                     row = {
                         'date photo taken': date,
                         'time photo taken': time,
-                        'name of image': photo.image_name,
+                        'image path': photo.image_path,
                         'nearest business': business.encode('ascii', 'ignore').decode('ascii'),
                         'nearest street address': road.encode('ascii', 'ignore').decode('ascii'),
                         'nearest city': city.encode('ascii', 'ignore').decode('ascii'),
