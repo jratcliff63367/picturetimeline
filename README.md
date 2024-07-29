@@ -9,11 +9,11 @@ Don't forget to do a PIP install on:
 
 This is a python script which does the following:
 
-Point it at a directory which contains a series of photographs (edit: source_directory to point to your folder)
+Point it at a directory (and sub-directories) which contains a series of photographs (edit: source_directory to point to your folder)
 
 When you run the script it will do the following:
 
-Scan all images in that directory
+Scan all images in that directory (and sub-directories)
 
 Collect all images which have a valid time and date stamp as well as geolocation data
 
